@@ -1,0 +1,14 @@
+.venv/
+.pgdata/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+backend/.env
+frontend/node_modules/
+frontend/dist/
+frontend/src-tauri/target/
+frontend/src-tauri/gen/android/.gradle/
+frontend/src-tauri/gen/android/app/build/
+*.log
+.DS_Store
