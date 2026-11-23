@@ -318,10 +318,9 @@ export function Workspace({ user, onLogout, onPasswordChanged }: WorkspaceProps)
   }
 
   const loading = tasksQuery.isPending || tagsQuery.isPending;
-  const initialError =
-    (tasksQuery.isError || tagsQuery.isError) && tasks.length === 0;
-  const backgroundError =
-    (tasksQuery.isError || tagsQuery.isError) && tasks.length > 0;
+  const queryError = tasksQuery.error ?? tagsQuery.error;
+  const initialError = Boolean(queryError) && tasks.length === 0;
+  const backgroundError = Boolean(queryError) && tasks.length > 0;
 
   const emptyMessage =
     hiddenCompleted && incompleteVisible.length === 0
@@ -401,7 +400,11 @@ export function Workspace({ user, onLogout, onPasswordChanged }: WorkspaceProps)
 
           {backgroundError && (
             <div className="offline-banner">
-              <span>获取数据失败，请检查网络连接</span>
+              <span>
+                {queryError
+                  ? errorMessage(queryError)
+                  : "获取数据失败，请检查网络连接"}
+              </span>
               <button
                 type="button"
                 className="text-btn"
@@ -423,7 +426,11 @@ export function Workspace({ user, onLogout, onPasswordChanged }: WorkspaceProps)
             </div>
           ) : initialError ? (
             <div className="inline-error">
-              <h3>获取数据失败，请检查网络连接</h3>
+              <h3>
+                {queryError
+                  ? errorMessage(queryError)
+                  : "获取数据失败，请检查网络连接"}
+              </h3>
               <button
                 type="button"
                 className="btn btn-primary"

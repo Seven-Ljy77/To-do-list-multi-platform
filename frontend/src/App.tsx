@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   api,
+  RequestTimeoutError,
   setApiToken,
   setUnauthorizedHandler,
   UnauthorizedError,
@@ -15,7 +16,7 @@ import type { User } from "./types";
 type AuthState =
   | { status: "booting" }
   | { status: "anon" }
-  | { status: "offline" }
+  | { status: "offline"; message: string }
   | { status: "ready"; user: User };
 
 function BootScreen() {
@@ -61,7 +62,13 @@ export default function App() {
         setMessage("登录已过期，请重新登录");
         setAuth({ status: "anon" });
       } else {
-        setAuth({ status: "offline" });
+        setAuth({
+          status: "offline",
+          message:
+            error instanceof RequestTimeoutError
+              ? "请求超时，请检查网络连接"
+              : "获取数据失败，请检查网络连接",
+        });
       }
     }
   }, []);
@@ -116,7 +123,7 @@ export default function App() {
   if (auth.status === "offline") {
     return (
       <OfflineScreen
-        message="获取数据失败，请检查网络连接"
+        message={auth.message}
         onRetry={boot}
         onLogout={() => void handleLogout()}
       />

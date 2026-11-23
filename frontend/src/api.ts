@@ -7,6 +7,8 @@ export const API_BASE_URL = (
   buildTimeUrl || (android ? "http://192.168.1.12:8000" : "http://127.0.0.1:8000")
 ).replace(/\/+$/, "");
 
+const REQUEST_TIMEOUT_MS = 15_000;
+
 let token: string | null = null;
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -37,6 +39,13 @@ export class NetworkError extends Error {
   }
 }
 
+export class RequestTimeoutError extends Error {
+  constructor() {
+    super("request_timeout");
+    this.name = "RequestTimeoutError";
+  }
+}
+
 export class UnauthorizedError extends ApiError {
   constructor() {
     super(401, "auth_required");
@@ -53,6 +62,9 @@ interface RequestOptions {
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, auth = true } = options;
 
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
@@ -62,9 +74,15 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
         ...(token && auth ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
     });
   } catch {
+    if (controller.signal.aborted) {
+      throw new RequestTimeoutError();
+    }
     throw new NetworkError();
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 
   if (response.status === 401) {

@@ -1,5 +1,11 @@
 import { useState, type FormEvent } from "react";
-import { API_BASE_URL, ApiError, NetworkError, api } from "../api";
+import {
+  API_BASE_URL,
+  ApiError,
+  NetworkError,
+  RequestTimeoutError,
+  api,
+} from "../api";
 import { deviceName } from "../auth-store";
 import { CheckIcon } from "./Icons";
 import type { User } from "../types";
@@ -26,7 +32,9 @@ export function LoginScreen({ message, onLoggedIn }: LoginScreenProps) {
       const result = await api.login(username.trim(), password, deviceName);
       await onLoggedIn(result.token, result.user);
     } catch (loginError) {
-      if (loginError instanceof NetworkError) {
+      if (loginError instanceof RequestTimeoutError) {
+        setError("请求超时，请检查网络连接");
+      } else if (loginError instanceof NetworkError) {
         setError("无法连接服务器，请检查网络连接");
       } else if (loginError instanceof ApiError) {
         if (loginError.status === 429) {

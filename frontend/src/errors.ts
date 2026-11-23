@@ -1,4 +1,4 @@
-import { ApiError, NetworkError } from "./api";
+import { ApiError, NetworkError, RequestTimeoutError } from "./api";
 
 const FRIENDLY: Record<string, string> = {
   invalid_credentials: "用户名或密码错误",
@@ -17,6 +17,9 @@ const FRIENDLY: Record<string, string> = {
 };
 
 export function errorMessage(error: unknown): string {
+  if (error instanceof RequestTimeoutError) {
+    return "请求超时，请检查网络连接";
+  }
   if (error instanceof NetworkError) {
     return "获取数据失败，请检查网络连接";
   }

@@ -1,7 +1,8 @@
 import os
 
-os.environ["DATABASE_URL"] = (
-    "postgresql+psycopg://todo_app:todo_app_dev_2026@127.0.0.1:5432/todo_test"
+os.environ["DATABASE_URL"] = os.environ.get(
+    "TEST_DATABASE_URL",
+    "postgresql+psycopg://postgres:030623@127.0.0.1:5432/todo_test",
 )
 
 import pytest
