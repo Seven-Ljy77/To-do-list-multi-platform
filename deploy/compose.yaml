@@ -1,0 +1,20 @@
+name: to-do-list-multi-platform
+
+services:
+
+  backend:
+    image: to-do-list-multi-platform-backend:dev
+    build:
+      context: ../backend
+    env_file:
+      - ../backend/.env
+
+  db:
+    image: postgres:17
+    env_file:
+      - ./.env.db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
