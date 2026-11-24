@@ -29,7 +29,7 @@ backend/
     schemas.py      Pydantic 模型
     security.py     Argon2 / Token / 登录限流
   alembic/          数据库迁移
-  tests/            pytest
+  test/             pytest
   .env              本地数据库连接（已 gitignore）
 frontend/
   src/              React 页面与组件
@@ -50,6 +50,16 @@ scripts/            启动和打包脚本
 - 连接用户：`postgres`（本机开发直接用超级用户；生产环境建议另建专用角色）
 - 两个库和库内对象的所有者都已转给 `postgres`
 - 连接串在 `backend/.env`，该文件不会提交
+
+### 首次安装后端依赖
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+测试目录带 `test/__init__.py`，pytest 会把 `backend/` 当作包根目录，所以测试里可以直接 `from app...`，不需要 `pyproject.toml`，也不需要在 `conftest.py` 里改 `sys.path`。
 
 ## 启动后端
 
@@ -119,7 +129,7 @@ cd backend
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-测试使用 `todo_test` 库，会重建表，不会动 `todo` 里的数据。
+测试使用 `todo_test` 库，会重建表，不会动 `todo` 里的数据。`test/` 是带 `__init__.py` 的包，pytest 会自动把 `backend/` 加入导入路径，因此从 `backend/` 或 `backend/test/` 下运行都可以，测试文件里直接 `from app...` 即可。
 
 ## 构建 Windows 安装包
 

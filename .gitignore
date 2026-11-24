@@ -12,3 +12,5 @@ frontend/src-tauri/gen/android/.gradle/
 frontend/src-tauri/gen/android/app/build/
 *.log
 .DS_Store
+.vscode/
+!.vscode/extensions.json
