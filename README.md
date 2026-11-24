@@ -249,3 +249,7 @@ APK 在 `src-tauri/gen/android/app/build/outputs/apk/`。
 - 请求超过 15 秒会中断并提示“请求超时，请检查网络连接”；断网提示“获取数据失败，请检查网络连接”；两者都不清登录态、不做离线缓存
 - 已完成任务沉底、不可拖动，取消完成回到原位
 - 不引入 Docker；部署时由使用方自行写 compose 和数据库环境变量
+
+## License
+
+MIT © 2026 Ljy
