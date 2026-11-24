@@ -39,7 +39,7 @@ scripts/            启动和打包脚本
 
 ## 本地环境
 
-- Python 3.13（`.venv` 已建好）
+- Python 3.13（虚拟环境在 `backend/.venv`）
 - Node.js 24 + npm
 - Rust 1.97 + MSVC（VS 2022 C++ 工具）
 - PostgreSQL 18，服务端口 5432（`pg_hba.conf` 当前只允许本机连接）
@@ -55,10 +55,20 @@ scripts/            启动和打包脚本
 
 ```powershell
 cd backend
-..\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-或者：
+也可以先激活虚拟环境：
+
+```powershell
+cd backend
+.\.venv\Scripts\Activate.ps1
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Windows 的虚拟环境激活脚本是 `Scripts\Activate.ps1`，不是 Unix 的 `bin/activate`。如果 PowerShell 拦截脚本执行，用 `Set-ExecutionPolicy -Scope Process Bypass`，或者直接使用上面的 `.\.venv\Scripts\python.exe`，不激活也能跑。
+
+或者从项目根目录：
 
 ```powershell
 .\scripts\dev-backend.ps1
@@ -106,7 +116,7 @@ npm run dev
 
 ```powershell
 cd backend
-..\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m pytest -q
 ```
 
 测试使用 `todo_test` 库，会重建表，不会动 `todo` 里的数据。
