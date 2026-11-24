@@ -6,17 +6,7 @@
 
 - 后端：会话 Token 鉴权、标签、任务、拖动排序、已完成沉底、改密/撤销会话、pytest
 - 桌面端：登录态本地持久化、标签筛选、任务增删改查、整行拖拽排序、拖到标签归类、单双击展开/编辑、退出登录确认、窗口大小和位置记忆、请求超时提示、改密
-- Android：前端已按触屏适配（长按拖动、底部安全区、响应式布局），但本机尚未安装 Android 工具链，还没有实际打过 APK
-
-## 界面预览
-
-![登录页](screenshots/login-desktop.png)
-
-![桌面端任务列表](screenshots/main-desktop.png)
-
-![移动端响应式布局](screenshots/main-mobile.png)
-
-> 移动端截图是在 Chromium 里用 390×844 的移动视口模拟的，不是 APK 或真机截图；截图中的任务是早期演示数据。
+- Android：已在荣耀 BKQ-AN00（Android 16 / MagicOS 10）上安装并测试 debug APK；触屏适配、标签面板、登录态持久化已完成
 
 ## 目录
 
@@ -34,7 +24,7 @@ backend/
 frontend/
   src/              React 页面与组件
   src-tauri/        Tauri 配置、Rust 壳、图标
-scripts/            启动和打包脚本
+scripts/            启动和打包脚本（Python）
 ```
 
 ## 本地环境
@@ -78,10 +68,16 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 Windows 的虚拟环境激活脚本是 `Scripts\Activate.ps1`，不是 Unix 的 `bin/activate`。如果 PowerShell 拦截脚本执行，用 `Set-ExecutionPolicy -Scope Process Bypass`，或者直接使用上面的 `.\.venv\Scripts\python.exe`，不激活也能跑。
 
-或者从项目根目录：
+或者从项目根目录用脚本启动，运行时会询问监听地址和端口：
 
 ```powershell
-.\scripts\dev-backend.ps1
+python .\scripts\dev_backend.py
+```
+
+也可以直接传参，不进入交互：
+
+```powershell
+python .\scripts\dev_backend.py --host 0.0.0.0 --port 8000
 ```
 
 - 接口文档：http://127.0.0.1:8000/docs
@@ -134,16 +130,22 @@ cd backend
 ## 构建 Windows 安装包
 
 ```powershell
-.\scripts\build-windows.ps1
-# 或指定后端地址
-.\scripts\build-windows.ps1 -ApiBaseUrl "https://todo.example.com"
+python .\scripts\build_windows.py
+```
+
+脚本会询问后端 API 地址，确认后把地址写入 `VITE_API_BASE_URL` 并执行 `tauri build`。
+
+也可以跳过交互：
+
+```powershell
+python .\scripts\build_windows.py --api-base-url "https://todo.example.com"
 ```
 
 产物：`frontend/src-tauri/target/release/bundle/nsis/Todo_0.1.0_x64-setup.exe`。当前版本已构建过一次，约 2 MB。
 
-## 构建 Android APK（工具链装好后）
+## 构建 Android APK
 
-前置：Android Studio、JDK 17+、SDK Platform、Build Tools、NDK，以及 Rust 的 Android target：
+前置：Android Studio、JDK、SDK Platform、Build Tools、NDK，以及 Rust 的 Android target：
 
 ```powershell
 rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
@@ -156,24 +158,32 @@ cd frontend
 npx tauri android init
 ```
 
-本地 HTTP 联调还要在 `src-tauri/gen/android/app/src/main/AndroidManifest.xml` 的 `<application>` 上允许明文流量：
-
-```xml
-<application android:usesCleartextTraffic="true" ...>
-```
-
-同时建议加上 `android:allowBackup="false"`，避免登录 Token 进入系统云备份。
-
-然后：
+然后从项目根目录运行：
 
 ```powershell
-.\scripts\build-android.ps1
-# 或
-$env:VITE_API_BASE_URL = "http://192.168.1.12:8000"
-npx tauri android build --apk
+python .\scripts\build_android.py
 ```
 
-APK 在 `src-tauri/gen/android/app/build/outputs/apk/`。正式走 HTTPS 后应把 `usesCleartextTraffic` 关掉。
+脚本会：
+
+1. 询问后端 API 地址
+2. 询问构建 debug 还是 release
+3. 自动查找 `JAVA_HOME`、`ANDROID_HOME` 和 NDK
+4. 把地址写入 `VITE_API_BASE_URL` 后打包
+
+也可以直接指定：
+
+```powershell
+# 调试包，适合直接安装测试，允许 HTTP
+python .\scripts\build_android.py --debug --api-base-url "http://192.168.1.12:8000"
+
+# 正式包，必须 HTTPS，并且需要先配置 release 签名
+python .\scripts\build_android.py --release --api-base-url "https://todo.example.com"
+```
+
+Debug 构建的 `usesCleartextTraffic` 由 Gradle 自动设为 `true`；Release 构建为 `false`，所以正式包必须走 HTTPS。`AndroidManifest.xml` 里的 `allowBackup="false"` 已经配置好。
+
+APK 在 `src-tauri/gen/android/app/build/outputs/apk/`。
 
 ## 后端地址是构建期常量
 

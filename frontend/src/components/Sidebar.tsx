@@ -1,14 +1,17 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import type { Tag, Task, User, View } from "../types";
 import {
+  ChevronIcon,
   InboxIcon,
   LayersIcon,
   LockIcon,
   LogOutIcon,
   PencilIcon,
   PlusIcon,
+  TagIcon,
   TrashIcon,
+  XIcon,
 } from "./Icons";
 
 interface SidebarProps {
@@ -61,12 +64,25 @@ export function Sidebar({
   onLogout,
   onOpenSettings,
 }: SidebarProps) {
+  const [tagsOpen, setTagsOpen] = useState(false);
   const allOpen = tasks.filter((task) => !task.is_completed).length;
   const untaggedOpen = tasks.filter(
     (task) => !task.is_completed && !task.tag,
   ).length;
+  const activeTag =
+    view.kind === "tag" ? tags.find((tag) => tag.id === view.tagId) : undefined;
+
+  useEffect(() => {
+    if (!tagsOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setTagsOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [tagsOpen]);
 
   return (
+    <>
     <aside className={`sidebar ${dragging ? "is-dragging" : ""}`}>
       <div className="sidebar-brand">
         <span className="brand-mark">
@@ -167,15 +183,27 @@ export function Sidebar({
             );
           })}
           {tags.length === 0 && <p className="sidebar-empty">还没有标签</p>}
-          <button
-            type="button"
-            className="nav-button mobile-add-tag"
-            onClick={onCreateTag}
-          >
-            <PlusIcon size={15} />
-            <span>标签</span>
-          </button>
         </div>
+
+        <button
+          type="button"
+          className={`nav-button mobile-tag-filter ${view.kind === "tag" ? "active" : ""}`}
+          onClick={() => setTagsOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={tagsOpen}
+          title="选择标签"
+        >
+          {activeTag ? (
+            <span
+              className="tag-dot"
+              style={{ backgroundColor: activeTag.color }}
+            />
+          ) : (
+            <TagIcon size={16} />
+          )}
+          <span className="nav-label">{activeTag?.name ?? "标签"}</span>
+          <ChevronIcon size={14} />
+        </button>
       </nav>
 
       <div className="sidebar-foot">
@@ -204,5 +232,102 @@ export function Sidebar({
         </button>
       </div>
     </aside>
+
+    {tagsOpen && (
+      <div
+        className="tag-sheet-backdrop"
+        role="presentation"
+        onClick={() => setTagsOpen(false)}
+      >
+        <section
+          className="tag-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-label="选择标签"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="tag-sheet-head">
+            <h2>标签</h2>
+            <button
+              type="button"
+              className="icon-btn"
+              title="关闭"
+              aria-label="关闭标签选择"
+              onClick={() => setTagsOpen(false)}
+            >
+              <XIcon size={17} />
+            </button>
+          </div>
+
+          <div className="tag-sheet-list">
+            {tags.map((tag) => {
+              const active = view.kind === "tag" && view.tagId === tag.id;
+              return (
+                <div
+                  key={tag.id}
+                  className={`tag-sheet-row ${active ? "active" : ""}`}
+                >
+                  <button
+                    type="button"
+                    className="tag-sheet-select"
+                    onClick={() => {
+                      onSelectView({ kind: "tag", tagId: tag.id });
+                      setTagsOpen(false);
+                    }}
+                  >
+                    <span
+                      className="tag-dot"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span className="tag-sheet-name">{tag.name}</span>
+                    <span className="tag-sheet-count">{tag.open_count}</span>
+                  </button>
+                  <div className="tag-sheet-actions">
+                    <button
+                      type="button"
+                      className="icon-btn icon-btn-small"
+                      title="编辑标签"
+                      aria-label={`编辑标签 ${tag.name}`}
+                      onClick={() => {
+                        setTagsOpen(false);
+                        onEditTag(tag);
+                      }}
+                    >
+                      <PencilIcon size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-btn icon-btn-small"
+                      title="删除标签"
+                      aria-label={`删除标签 ${tag.name}`}
+                      onClick={() => {
+                        setTagsOpen(false);
+                        onDeleteTag(tag);
+                      }}
+                    >
+                      <TrashIcon size={14} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+            {tags.length === 0 && <p className="tag-sheet-empty">还没有标签</p>}
+          </div>
+
+          <button
+            type="button"
+            className="tag-sheet-create"
+            onClick={() => {
+              setTagsOpen(false);
+              onCreateTag();
+            }}
+          >
+            <PlusIcon size={16} />
+            <span>新建标签</span>
+          </button>
+        </section>
+      </div>
+    )}
+    </>
   );
 }

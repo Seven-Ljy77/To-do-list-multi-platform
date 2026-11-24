@@ -8,8 +8,19 @@ backend/.env
 frontend/node_modules/
 frontend/dist/
 frontend/src-tauri/target/
+
+# Tauri 生成的 Android 工程本身要提交；只忽略构建产物和签名私钥
 frontend/src-tauri/gen/android/.gradle/
+frontend/src-tauri/gen/android/.kotlin/
+frontend/src-tauri/gen/android/.idea/
+frontend/src-tauri/gen/android/build/
 frontend/src-tauri/gen/android/app/build/
+frontend/src-tauri/gen/android/local.properties
+frontend/src-tauri/gen/android/**/*.jks
+frontend/src-tauri/gen/android/**/*.keystore
+*.jks
+*.keystore
+
 *.log
 .DS_Store
 .vscode/
