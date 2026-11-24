@@ -2,7 +2,7 @@ name: to-do-list-multi-platform
 
 services:
 
-  backend:
+  todo-backend:
     image: to-do-list-multi-platform-backend:dev
     build:
       context: ../backend
