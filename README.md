@@ -183,6 +183,35 @@ python .\scripts\build_android.py --release --api-base-url "https://todo.example
 
 Debug 构建的 `usesCleartextTraffic` 由 Gradle 自动设为 `true`；Release 构建为 `false`，所以正式包必须走 HTTPS。`AndroidManifest.xml` 里的 `allowBackup="false"` 已经配置好。
 
+### 首次配置 release 签名
+
+正式包需要自己的签名。首次执行：
+
+```powershell
+python .\scripts\setup_android_signing.py
+```
+
+脚本会询问：
+
+- keystore 保存路径（默认 `C:\Users\<你>\AndroidKeys\todo-release.jks`）
+- key alias（默认 `todo`）
+- keystore 密码（输入两次）
+
+然后生成 keystore，并在 `frontend/src-tauri/gen/android/keystore.properties` 写入签名配置。
+
+注意：
+
+- `keystore.properties` 和 `*.jks` 都已被 gitignore
+- 一定要备份 keystore 和 `keystore.properties`
+- 丢失后无法覆盖升级正式包
+- 密码会以明文保存在本机的 `keystore.properties` 中，不要提交或分享
+
+配置完成后，正式打包：
+
+```powershell
+python .\scripts\build_android.py --release --api-base-url "https://todo.example.com"
+```
+
 APK 在 `src-tauri/gen/android/app/build/outputs/apk/`。
 
 ## 后端地址是构建期常量

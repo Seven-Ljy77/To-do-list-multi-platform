@@ -61,6 +61,7 @@ export function Workspace({ user, onLogout, onPasswordChanged }: WorkspaceProps)
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const modalOpen = Boolean(tagEditor || confirm) || passwordOpen;
 
   const toastTimer = useRef<number | null>(null);
   const addInputRef = useRef<HTMLInputElement>(null);
@@ -76,6 +77,31 @@ export function Workspace({ user, onLogout, onPasswordChanged }: WorkspaceProps)
       if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
     };
   }, []);
+
+  function closeModals() {
+    setTagEditor(null);
+    setConfirm(null);
+    setPasswordOpen(false);
+    if (window.history.state?.modalOpen) {
+      window.history.back();
+    }
+  }
+
+  useEffect(() => {
+    if (!modalOpen) return;
+
+    window.history.pushState(
+      { ...(window.history.state ?? {}), modalOpen: true },
+      "",
+    );
+    const onPopState = () => {
+      setTagEditor(null);
+      setConfirm(null);
+      setPasswordOpen(false);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [modalOpen]);
 
   async function refresh() {
     await Promise.all([
@@ -196,7 +222,7 @@ export function Workspace({ user, onLogout, onPasswordChanged }: WorkspaceProps)
       await api.createTag(name, color);
     }
     await refresh();
-    setTagEditor(null);
+    closeModals();
     showToast("标签已保存");
   }
 
@@ -205,7 +231,7 @@ export function Workspace({ user, onLogout, onPasswordChanged }: WorkspaceProps)
 
     if (confirm.kind === "logout") {
       await onLogout();
-      setConfirm(null);
+      closeModals();
       return;
     }
 
@@ -216,7 +242,7 @@ export function Workspace({ user, onLogout, onPasswordChanged }: WorkspaceProps)
       );
       if (result.ok) {
         if (expandedId === confirm.task.id) setExpandedId(null);
-        setConfirm(null);
+        closeModals();
       }
       return;
     }
@@ -226,7 +252,7 @@ export function Workspace({ user, onLogout, onPasswordChanged }: WorkspaceProps)
       if (view.kind === "tag" && view.tagId === confirm.tag.id) {
         setView({ kind: "all" });
       }
-      setConfirm(null);
+      closeModals();
     }
   }
 
@@ -493,7 +519,7 @@ export function Workspace({ user, onLogout, onPasswordChanged }: WorkspaceProps)
       {tagEditor && (
         <TagEditor
           tag={tagEditor.tag}
-          onClose={() => setTagEditor(null)}
+          onClose={closeModals}
           onSave={handleSaveTag}
         />
       )}
@@ -516,16 +542,16 @@ export function Workspace({ user, onLogout, onPasswordChanged }: WorkspaceProps)
           }
           confirmLabel={confirm.kind === "logout" ? "退出登录" : "删除"}
           danger={confirm.kind !== "logout"}
-          onClose={() => setConfirm(null)}
+          onClose={closeModals}
           onConfirm={handleConfirmDelete}
         />
       )}
 
       {passwordOpen && (
         <PasswordDialog
-          onClose={() => setPasswordOpen(false)}
+          onClose={closeModals}
           onChanged={() => {
-            setPasswordOpen(false);
+            closeModals();
             void onPasswordChanged();
           }}
         />

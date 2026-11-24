@@ -770,12 +770,6 @@ button:disabled {
   justify-content: flex-end;
 }
 
-.editor-hint {
-  font-size: 10.5px;
-  color: var(--faint);
-  margin-right: auto;
-}
-
 .completed-divider {
   display: flex;
   align-items: center;

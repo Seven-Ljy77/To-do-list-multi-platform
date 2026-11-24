@@ -105,10 +105,28 @@ def npx_command(args: list[str]) -> list[str]:
 
 def release_signing_configured() -> bool:
     gradle = GEN_ANDROID / "app" / "build.gradle.kts"
-    if not gradle.is_file():
+    properties_file = GEN_ANDROID / "keystore.properties"
+    if not gradle.is_file() or not properties_file.is_file():
         return False
-    text = gradle.read_text(encoding="utf-8", errors="ignore")
-    return "signingConfig" in text or "signingConfigs" in text
+    if "signingConfig" not in gradle.read_text(encoding="utf-8", errors="ignore"):
+        return False
+
+    values: dict[str, str] = {}
+    for line in properties_file.read_text(encoding="utf-8", errors="ignore").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip()
+
+    required = {"storeFile", "storePassword", "keyAlias", "keyPassword"}
+    if not required.issubset(values):
+        return False
+
+    store_file = Path(values["storeFile"])
+    if not store_file.is_absolute():
+        store_file = GEN_ANDROID / store_file
+    return store_file.is_file()
 
 
 def choose_build_type(force_release: bool, force_debug: bool) -> str:
@@ -161,8 +179,9 @@ def main() -> int:
 
     if is_release and not release_signing_configured():
         print(
-            "release 签名还没配置。请先在 gen/android/app/build.gradle.kts 里配置 "
-            "signingConfigs，并把 keystore 放在不会被提交的位置。",
+            "release 签名还没配置。请先运行：\n"
+            "  python .\\scripts\\setup_android_signing.py\n"
+            "然后重新执行当前命令。",
             file=sys.stderr,
         )
         return 1

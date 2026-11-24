@@ -124,7 +124,6 @@ export function TaskEditor({ task, tags, onSave, onCancel }: TaskEditorProps) {
       {error && <p className="form-error">{error}</p>}
 
       <div className="editor-actions">
-        <span className="editor-hint">Ctrl / ⌘ + Enter 保存</span>
         <button type="button" className="btn btn-ghost" onClick={onCancel} disabled={busy}>
           取消
         </button>

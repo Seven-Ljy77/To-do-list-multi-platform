@@ -72,13 +72,30 @@ export function Sidebar({
   const activeTag =
     view.kind === "tag" ? tags.find((tag) => tag.id === view.tagId) : undefined;
 
+  function closeTags() {
+    setTagsOpen(false);
+    if (window.history.state?.tagSheet) {
+      window.history.back();
+    }
+  }
+
   useEffect(() => {
     if (!tagsOpen) return;
+
+    window.history.pushState(
+      { ...(window.history.state ?? {}), tagSheet: true },
+      "",
+    );
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setTagsOpen(false);
+      if (event.key === "Escape") closeTags();
     };
+    const onPopState = () => setTagsOpen(false);
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("popstate", onPopState);
+    };
   }, [tagsOpen]);
 
   return (
@@ -237,7 +254,7 @@ export function Sidebar({
       <div
         className="tag-sheet-backdrop"
         role="presentation"
-        onClick={() => setTagsOpen(false)}
+        onClick={() => closeTags()}
       >
         <section
           className="tag-sheet"
@@ -253,7 +270,7 @@ export function Sidebar({
               className="icon-btn"
               title="关闭"
               aria-label="关闭标签选择"
-              onClick={() => setTagsOpen(false)}
+              onClick={() => closeTags()}
             >
               <XIcon size={17} />
             </button>
@@ -272,7 +289,7 @@ export function Sidebar({
                     className="tag-sheet-select"
                     onClick={() => {
                       onSelectView({ kind: "tag", tagId: tag.id });
-                      setTagsOpen(false);
+                      closeTags();
                     }}
                   >
                     <span
@@ -289,7 +306,7 @@ export function Sidebar({
                       title="编辑标签"
                       aria-label={`编辑标签 ${tag.name}`}
                       onClick={() => {
-                        setTagsOpen(false);
+                        closeTags();
                         onEditTag(tag);
                       }}
                     >
@@ -301,7 +318,7 @@ export function Sidebar({
                       title="删除标签"
                       aria-label={`删除标签 ${tag.name}`}
                       onClick={() => {
-                        setTagsOpen(false);
+                        closeTags();
                         onDeleteTag(tag);
                       }}
                     >
@@ -318,7 +335,7 @@ export function Sidebar({
             type="button"
             className="tag-sheet-create"
             onClick={() => {
-              setTagsOpen(false);
+              closeTags();
               onCreateTag();
             }}
           >
