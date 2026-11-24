@@ -72,10 +72,15 @@ export function Sidebar({
   const activeTag =
     view.kind === "tag" ? tags.find((tag) => tag.id === view.tagId) : undefined;
 
-  function closeTags() {
+  function closeTags(back = true) {
     setTagsOpen(false);
-    if (window.history.state?.tagSheet) {
+    if (!window.history.state?.tagSheet) return;
+    if (back) {
       window.history.back();
+    } else {
+      const next = { ...window.history.state };
+      delete next.tagSheet;
+      window.history.replaceState(next, "");
     }
   }
 
@@ -306,7 +311,7 @@ export function Sidebar({
                       title="编辑标签"
                       aria-label={`编辑标签 ${tag.name}`}
                       onClick={() => {
-                        closeTags();
+                        closeTags(false);
                         onEditTag(tag);
                       }}
                     >
@@ -318,7 +323,7 @@ export function Sidebar({
                       title="删除标签"
                       aria-label={`删除标签 ${tag.name}`}
                       onClick={() => {
-                        closeTags();
+                        closeTags(false);
                         onDeleteTag(tag);
                       }}
                     >
@@ -335,7 +340,7 @@ export function Sidebar({
             type="button"
             className="tag-sheet-create"
             onClick={() => {
-              closeTags();
+              closeTags(false);
               onCreateTag();
             }}
           >
